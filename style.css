@@ -1,55 +1,74 @@
-:root {
-  --paper: #F6F5EE;
-  --paper-line: #C9D6DE;
-  --ink: #26332C;
-  --ink-soft: #5B6B62;
-  --green: #4C9A6A;
-  --green-dark: #367A50;
-  --red: #D64545;
-  --red-dark: #B23333;
-  --yellow: #F2C14E;
-  --yellow-dark: #D9A62E;
-  --card: #FFFDF8;
-  --shadow: rgba(38, 51, 44, 0.14);
-}
+:root{
+    --bg:#1e1f22;
+    --bg2:#313338;
+    --card:#2b2d31;
+    --card2:#232428;
 
+    --accent:#5865F2;
+    --accentHover:#4752C4;
+
+    --text:#F2F3F5;
+    --muted:#B5BAC1;
+
+    --green:#3BA55D;
+    --red:#ED4245;
+
+    --border:#3F4147;
+
+    --shadow:rgba(0,0,0,.45);
+}
 * { box-sizing: border-box; }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--paper);
-  background-image:
-    repeating-linear-gradient(to bottom, transparent 0 38px, var(--paper-line) 38px 39px);
-  color: var(--ink);
-  font-family: 'Work Sans', sans-serif;
+body{
+    margin:0;
+    min-height:100vh;
+
+    background:var(--bg);
+
+    color:var(--text);
+
+    font-family:Arial,sans-serif;
+
+    font-weight:bold;
 }
-
-.mono { font-family: 'JetBrains Mono', monospace; }
-.muted { color: var(--ink-soft); font-weight: 400; }
-.hidden { display: none !important; }
-
-.notebook {
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 0 24px 64px;
+.notebook{
+    max-width:1100px;
+    margin:auto;
+    padding:40px;
 }
 
 /* Header */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 28px 4px 18px;
+.header{
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+margin-bottom:60px;
+
+padding:0;
 }
 .header-left { display: flex; align-items: center; gap: 10px; }
-.ring { color: var(--paper-line); font-size: 22px; }
-.brand {
-  font-family: 'Kalam', cursive;
-  font-weight: 700;
-  font-size: 32px;
-  margin: 0;
-  color: var(--ink);
+.ring{
+
+display:none;
+
+}
+.brand{
+
+font-family:Arial,sans-serif;
+
+font-weight:800;
+
+font-size:42px;
+
+letter-spacing:2px;
+
+color:white;
+
+margin:0;
 }
 .user-badge { display: flex; align-items: center; gap: 14px; }
 
@@ -66,11 +85,22 @@ body {
 .link-btn:hover { color: var(--ink); }
 
 /* Cards */
-.id-card, .planner {
-  background: var(--card);
-  border-radius: 10px;
-  box-shadow: 0 6px 18px var(--shadow);
-  border: 1px solid #EBE6D8;
+.id-card{
+
+width:430px;
+
+background:var(--card);
+
+padding:35px;
+
+border-radius:14px;
+
+border:none;
+
+box-shadow:0 18px 40px var(--shadow);
+
+margin:auto;
+
 }
 
 .id-card {
@@ -79,47 +109,116 @@ body {
   padding: 28px 28px 20px;
 }
 
-.tabs { display: flex; gap: 6px; margin-bottom: 20px; }
-.tab {
-  flex: 1;
-  padding: 9px 6px;
-  border: none;
-  border-radius: 7px;
-  background: #EFEBDD;
-  color: var(--ink-soft);
-  font-family: 'Work Sans', sans-serif;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
+.tabs{
+
+background:var(--bg2);
+
+padding:5px;
+
+border-radius:10px;
+
+margin-bottom:25px;
+
+display:flex;
+
+gap:5px;
+
+}
+.tab{
+
+background:transparent;
+
+color:var(--muted);
+
+border:none;
+
+border-radius:8px;
+
+font-family:Arial;
+
+font-weight:bold;
+
+font-size:15px;
+
+padding:12px;
+
+transition:.25s;
+
+cursor:pointer;
+
+}
+
+.tab:hover{
+
+background:#3a3c43;
+
+}
+
+.tab.active{
+
+background:var(--accent);
+
+color:white;
+
 }
 .tab.active { background: var(--ink); color: var(--paper); }
 
 .auth-form { display: flex; flex-direction: column; gap: 14px; }
-.auth-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-soft);
+.auth-form label{
+
+font-family:Arial;
+
+font-size:14px;
+
+font-weight:bold;
+
+color:#B5BAC1;
+
 }
-.auth-form input {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-  padding: 10px 12px;
-  border-radius: 7px;
-  border: 1.5px solid #DDD6C2;
-  background: #FCFBF6;
-  color: var(--ink);
+.auth-form input{
+
+background:#1E1F22;
+
+border:2px solid var(--border);
+
+color:white;
+
+font-family:Arial;
+
+font-size:15px;
+
+font-weight:bold;
+
+padding:14px;
+
+border-radius:8px;
+
+transition:.25s;
+
 }
-.auth-form input:focus, .note-form textarea:focus {
-  outline: 3px solid #F2C14E55;
-  border-color: var(--yellow-dark);
+
+.auth-form input:focus{
+
+outline:none;
+
+border-color:var(--accent);
+
+box-shadow:0 0 12px rgba(88,101,242,.45);
+
 }
 
 .error { color: var(--red-dark); font-size: 13px; font-weight: 600; margin-top: 14px; }
-.note { color: var(--ink-soft); font-size: 12px; margin-top: 16px; line-height: 1.5; }
+.note{
 
+color:#A3A6AA;
+
+font-size:13px;
+
+line-height:1.5;
+
+font-weight:normal;
+
+}
 /* Stamp buttons */
 .stamp {
   font-family: 'Kalam', cursive;
@@ -131,12 +230,61 @@ body {
   cursor: pointer;
   transition: transform .08s ease;
 }
-.stamp:active { transform: scale(0.97); }
-.stamp-green { background: #E7F4EC; color: var(--green-dark); border-color: var(--green); }
-.stamp-green.selected { background: var(--green); color: #fff; }
-.stamp-red { background: #FBEAEA; color: var(--red-dark); border-color: var(--red); }
-.stamp-red.selected { background: var(--red); color: #fff; }
-.stamp-yellow { background: var(--yellow); color: #453410; border-color: var(--yellow-dark); }
+.stamp{
+
+font-family:Arial;
+
+font-weight:bold;
+
+font-size:15px;
+
+border:none;
+
+border-radius:8px;
+
+padding:14px;
+
+transition:.2s;
+
+cursor:pointer;
+
+}
+
+.stamp:hover{
+
+transform:translateY(-2px);
+
+}
+
+.stamp-yellow{
+
+background:var(--accent);
+
+color:white;
+
+}
+
+.stamp-yellow:hover{
+
+background:var(--accentHover);
+
+}
+
+.stamp-green{
+
+background:var(--green);
+
+color:white;
+
+}
+
+.stamp-red{
+
+background:var(--red);
+
+color:white;
+
+}
 .full-width { width: 100%; }
 
 /* Planner / calendar */
@@ -254,4 +402,44 @@ body {
 @media (max-width: 520px) {
   .brand { font-size: 24px; }
   .day-cell { min-height: 46px; }
+}
+
+/* Force all italic tags and styles back to regular text */
+em, i, cite, address, dfn, var, [style*="font-style: italic"] {
+  font-style: normal !important;
+}
+
+/* Reset any class or ID rules that might be applying italics */
+* {
+  font-style: normal !important;
+}
+
+button{
+
+transition:.25s;
+
+}
+
+input::placeholder{
+
+color:#777;
+
+}
+
+*{
+
+font-style:normal!important;
+
+font-family:Arial,sans-serif;
+
+}
+
+body{
+
+display:flex;
+
+justify-content:center;
+
+align-items:flex-start;
+
 }
