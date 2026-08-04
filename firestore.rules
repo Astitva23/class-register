@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Everyone signed in can see everyone's name; you can only edit your own profile.
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && request.auth.uid == uid;
+      allow delete: if false;
+    }
+
+    match /days/{dateId} {
+      allow read: if signedIn();
+
+      // Attendance: anyone signed in can read the whole class's status,
+      // but you can only ever write your own attendance doc (doc id = your uid).
+      match /attendance/{uid} {
+        allow read: if signedIn();
+        allow write: if signedIn() && request.auth.uid == uid;
+      }
+
+      // Notes: anyone signed in can read and add notes.
+      // You can only edit or delete a note you authored.
+      match /notes/{noteId} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.resource.data.authorUid == request.auth.uid;
+        allow update, delete: if signedIn() && resource.data.authorUid == request.auth.uid;
+      }
+    }
+  }
+}
