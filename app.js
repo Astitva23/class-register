@@ -291,7 +291,9 @@ function listenEvents(key) {
       const data = doc.data();
       const li = document.createElement("li");
       li.className = "event-item";
-      const label = `${data.category} (${data.subject})`;
+      const label = data.eventName
+        ? `${data.category} - ${data.eventName} (${data.subject})`
+        : `${data.category} (${data.subject})`;
       li.innerHTML = `${escapeHtml(label)} - Added by ${escapeHtml(data.authorUsername)}`;
       list.appendChild(li);
     });
@@ -300,9 +302,19 @@ function listenEvents(key) {
 
 $("open-add-event").addEventListener("click", () => {
   $("event-form").reset();
+  toggleEventNameField();
   $("event-modal").classList.remove("hidden");
   $("event-modal-backdrop").classList.remove("hidden");
 });
+
+// The "Event name" box only appears (and is only required) for Extracurricular.
+function toggleEventNameField() {
+  const isExtracurricular = $("event-category").value === "Extracurricular";
+  $("event-name-field").classList.toggle("hidden", !isExtracurricular);
+  $("event-name").required = isExtracurricular;
+  if (!isExtracurricular) $("event-name").value = "";
+}
+$("event-category").addEventListener("change", toggleEventNameField);
 
 function closeEventModal() {
   $("event-modal").classList.add("hidden");
@@ -315,16 +327,21 @@ $("event-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const category = $("event-category").value;
   const subject = $("event-subject").value;
+  const eventName = $("event-name").value.trim();
   if (!category || !subject || !selectedDateKey || !currentUser) return;
+  if (category === "Extracurricular" && !eventName) return;
 
-  await db.collection("days").doc(selectedDateKey).collection("events").add({
+  const doc = {
     category,
     subject,
     dateKey: selectedDateKey,
     authorUsername: currentUser.username,
     authorUid: currentUser.uid,
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-  });
+  };
+  if (category === "Extracurricular") doc.eventName = eventName;
+
+  await db.collection("days").doc(selectedDateKey).collection("events").add(doc);
 
   closeEventModal();
   renderCalendar();
