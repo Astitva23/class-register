@@ -118,7 +118,7 @@ $("next-month").addEventListener("click", () => {
 
 const MONTH_NAMES = ["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
 
-async function renderCalendar() {
+function renderCalendar() {
   $("month-label").textContent = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
   const grid = $("calendar-grid");
   grid.innerHTML = "";
@@ -132,25 +132,44 @@ async function renderCalendar() {
     grid.appendChild(empty);
   }
 
-  const monthPrefix = `${viewYear}-${pad(viewMonth + 1)}`;
-  const summaries = await getMonthSummaries(monthPrefix);
-
+  // Draw every tile immediately — dots get filled in afterward once the
+  // (async, sometimes slow or failing) summary fetch resolves, so a
+  // Firestore hiccup never blanks the whole grid.
   for (let d = 1; d <= daysInMonth; d++) {
     const key = dateKey(viewYear, viewMonth, d);
     const cell = document.createElement("div");
     cell.className = "day-cell" + (key === todayKey() ? " today" : "");
+    cell.dataset.dateKey = key;
     cell.innerHTML = `<span class="day-num">${d}</span><span class="day-dots"></span>`;
-
-    const s = summaries[key];
-    const dots = cell.querySelector(".day-dots");
-    if (s?.attending) dots.innerHTML += `<span class="dot dot-green"></span>`;
-    if (s?.notAttending) dots.innerHTML += `<span class="dot dot-red"></span>`;
-    if (s?.notSure) dots.innerHTML += `<span class="dot dot-yellow"></span>`;
-    if (s?.event) dots.innerHTML += `<span class="dot dot-event"></span>`;
-
     cell.addEventListener("click", () => openDaySheet(key));
     grid.appendChild(cell);
   }
+
+  loadMonthDots();
+}
+
+async function loadMonthDots() {
+  const monthPrefix = `${viewYear}-${pad(viewMonth + 1)}`;
+  let summaries = {};
+  try {
+    summaries = await getMonthSummaries(monthPrefix);
+  } catch (err) {
+    // Most likely cause: Firestore needs a composite index for this query
+    // the first time it runs. Check the browser console for a link to
+    // create it — the tiles themselves still render fine either way.
+    console.error("Could not load calendar summary dots:", err);
+    return;
+  }
+
+  document.querySelectorAll(".day-cell[data-date-key]").forEach((cell) => {
+    const s = summaries[cell.dataset.dateKey];
+    if (!s) return;
+    const dots = cell.querySelector(".day-dots");
+    if (s.attending) dots.innerHTML += `<span class="dot dot-green"></span>`;
+    if (s.notAttending) dots.innerHTML += `<span class="dot dot-red"></span>`;
+    if (s.notSure) dots.innerHTML += `<span class="dot dot-yellow"></span>`;
+    if (s.event) dots.innerHTML += `<span class="dot dot-event"></span>`;
+  });
 }
 
 async function getMonthSummaries(monthPrefix) {
