@@ -4,117 +4,157 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Class Register</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<div class="notebook">
+<div class="app-shell">
 
   <header class="header">
-    <div class="header-left">
-      <span class="ring">⌾</span><span class="ring">⌾</span><span class="ring">⌾</span>
-      <h1 class="brand">Class Register</h1>
-    </div>
+    <h1 class="brand">CLASS REGISTER</h1>
     <div id="user-badge" class="user-badge hidden">
-      <span id="user-name" class="mono"></span>
-      <button id="logout-btn" class="link-btn">Sign out</button>
+      <span id="user-name"></span>
+      <button id="logout-btn" class="text-btn">Sign out</button>
     </div>
   </header>
 
   <!-- AUTH -->
   <section id="auth-section" class="page">
-    <div class="id-card">
+    <div class="auth-card">
       <div class="tabs">
         <button class="tab active" data-tab="login" type="button">Sign in</button>
         <button class="tab" data-tab="signup" type="button">Join the class</button>
       </div>
 
       <form id="login-form" class="auth-form">
-        <label>Username
+        <label>User ID
           <input type="text" id="login-username" autocomplete="username" required />
         </label>
         <label>Password
           <input type="password" id="login-password" autocomplete="current-password" required />
         </label>
-        <button type="submit" class="stamp stamp-yellow full-width">Sign in</button>
+        <button type="submit" class="btn btn-primary full-width">Sign in</button>
       </form>
 
       <form id="signup-form" class="auth-form hidden">
         <label>Your name
           <input type="text" id="signup-name" required />
         </label>
-        <label>Pick a username
+        <label>Pick a User ID
           <input type="text" id="signup-username" autocomplete="username" required pattern="[a-zA-Z0-9_.]{3,20}" title="3-20 letters, numbers, underscores or dots" />
         </label>
         <label>Pick a password
           <input type="password" id="signup-password" autocomplete="new-password" required minlength="6" />
         </label>
-        <button type="submit" class="stamp stamp-green full-width">Join class</button>
+        <button type="submit" class="btn btn-primary full-width">Join class</button>
       </form>
 
       <p id="auth-error" class="error hidden"></p>
-      <p id="auth-note" class="note">Everyone signs up once with their own username — no teacher setup needed.</p>
+      <p class="note">Any User ID works — no email required.</p>
     </div>
   </section>
 
   <!-- APP -->
   <section id="app-section" class="page hidden">
-
-    <div class="planner">
+    <div class="calendar-card">
       <div class="month-nav">
-        <button id="prev-month" class="link-btn" type="button">&larr;</button>
-        <h2 id="month-label" class="mono"></h2>
-        <button id="next-month" class="link-btn" type="button">&rarr;</button>
+        <button id="prev-month" class="text-btn" type="button">&larr;</button>
+        <h2 id="month-label"></h2>
+        <button id="next-month" class="text-btn" type="button">&rarr;</button>
       </div>
 
       <div class="weekday-row">
-        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
       </div>
 
       <div class="calendar-grid" id="calendar-grid"></div>
 
       <p class="legend">
-        <span class="dot dot-green"></span> marked present &nbsp;&nbsp;
-        <span class="dot dot-red"></span> marked absent &nbsp;&nbsp;
-        <span class="dot dot-note"></span> has notes
+        <span class="dot dot-green"></span> ATTENDING
+        <span class="dot dot-red"></span> NOT ATTENDING
+        <span class="dot dot-yellow"></span> NOT SURE
+        <span class="dot dot-event"></span> EVENT
       </p>
     </div>
   </section>
-
 </div>
 
-<!-- Day detail panel -->
-<div id="day-panel-backdrop" class="day-panel-backdrop hidden"></div>
-<aside id="day-panel" class="day-panel hidden">
-  <button id="close-panel" class="link-btn close-btn" type="button">&times; close</button>
-  <h3 id="panel-date" class="mono panel-title"></h3>
+<!-- Bottom sheet -->
+<div id="sheet-backdrop" class="sheet-backdrop hidden"></div>
+<div id="day-sheet" class="day-sheet hidden">
+  <div class="sheet-handle"></div>
+  <button id="close-sheet" class="text-btn close-sheet-btn" type="button">CLOSE</button>
+  <h3 id="sheet-date" class="sheet-title"></h3>
 
-  <div class="block">
-    <h4>Your status for this day</h4>
-    <div class="my-status">
-      <button id="mark-coming" class="stamp stamp-green" type="button">I'm coming</button>
-      <button id="mark-not-coming" class="stamp stamp-red" type="button">Not coming</button>
+  <div class="sheet-block">
+    <div class="sheet-block-header">
+      <h4>IMPORTANT EVENTS</h4>
+      <button id="open-add-event" class="btn btn-small btn-primary" type="button">+ ADD EVENT</button>
+    </div>
+    <ul id="events-list" class="events-list"></ul>
+  </div>
+
+  <div class="sheet-block">
+    <h4>YOUR STATUS</h4>
+    <div class="status-buttons">
+      <button id="mark-attending" class="btn btn-status btn-green" type="button">ATTENDING</button>
+      <button id="mark-not-attending" class="btn btn-status btn-red" type="button">NOT ATTENDING</button>
+      <button id="mark-not-sure" class="btn btn-status btn-yellow" type="button">NOT SURE</button>
     </div>
   </div>
 
-  <div class="block">
-    <h4>Who's coming <span id="attend-count" class="mono muted"></span></h4>
-    <ul id="attendance-list" class="roll-list"></ul>
+  <div class="sheet-block">
+    <h4>ATTENDANCE STATUS</h4>
+    <div class="status-columns">
+      <div class="status-col">
+        <div class="status-col-header col-green">ATTENDING</div>
+        <ul id="list-attending" class="status-name-list"></ul>
+      </div>
+      <div class="status-col">
+        <div class="status-col-header col-red">NOT ATTENDING</div>
+        <ul id="list-not-attending" class="status-name-list"></ul>
+      </div>
+      <div class="status-col">
+        <div class="status-col-header col-yellow">NOT SURE</div>
+        <ul id="list-not-sure" class="status-name-list"></ul>
+      </div>
+    </div>
   </div>
+</div>
 
-  <div class="block">
-    <h4>Notes for this date</h4>
-    <ul id="notes-list" class="sticky-list"></ul>
-    <form id="note-form" class="note-form">
-      <textarea id="note-text" placeholder="e.g. Physics test — bring calculator" required></textarea>
-      <button type="submit" class="stamp stamp-yellow full-width">Pin note</button>
-    </form>
-  </div>
-</aside>
+<!-- Add event modal -->
+<div id="event-modal-backdrop" class="modal-backdrop hidden"></div>
+<div id="event-modal" class="modal hidden">
+  <h3>ADD EVENT</h3>
+  <form id="event-form">
+    <label>Category
+      <select id="event-category" required>
+        <option value="" disabled selected>Select category</option>
+        <option>C.T</option>
+        <option>Copy submission</option>
+        <option>Test</option>
+        <option>Practical</option>
+        <option>Extracurricular</option>
+      </select>
+    </label>
+    <label>Subject
+      <select id="event-subject" required>
+        <option value="" disabled selected>Select subject</option>
+        <option>English</option>
+        <option>Chemistry</option>
+        <option>Physics</option>
+        <option>Maths</option>
+        <option>Optional</option>
+        <option>No subject</option>
+      </select>
+    </label>
+    <div class="modal-actions">
+      <button type="button" id="cancel-event" class="btn btn-ghost">CANCEL</button>
+      <button type="submit" class="btn btn-primary">ADD EVENT</button>
+    </div>
+  </form>
+</div>
 
-<!-- Firebase (compat build — no bundler needed) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>

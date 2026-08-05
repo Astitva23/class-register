@@ -23,9 +23,9 @@ service cloud.firestore {
         allow write: if signedIn() && request.auth.uid == uid;
       }
 
-      // Notes: anyone signed in can read and add notes.
-      // You can only edit or delete a note you authored.
-      match /notes/{noteId} {
+      // Events: anyone signed in can read and add events.
+      // You can only edit or delete an event you authored.
+      match /events/{eventId} {
         allow read: if signedIn();
         allow create: if signedIn() && request.resource.data.authorUid == request.auth.uid;
         allow update, delete: if signedIn() && resource.data.authorUid == request.auth.uid;
