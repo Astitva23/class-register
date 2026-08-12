@@ -175,6 +175,14 @@
   </form>
 </div>
 
+<!-- Photo lightbox -->
+<div id="lightbox-backdrop" class="modal-backdrop hidden"></div>
+<div id="photo-lightbox" class="modal photo-lightbox hidden">
+  <button id="close-lightbox" class="text-btn close-sheet-btn" type="button">&times;</button>
+  <img id="lightbox-img" src="" alt="Note photo" />
+  <a id="lightbox-download" class="btn btn-primary full-width" download>DOWNLOAD</a>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>

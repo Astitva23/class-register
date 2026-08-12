@@ -388,16 +388,31 @@ function renderNotePhotoGrid() {
   }
 
   filtered.forEach((n) => {
-    const item = document.createElement("a");
+    const item = document.createElement("button");
+    item.type = "button";
     item.className = "note-photo-item";
-    item.href = n.imageData;
-    item.target = "_blank";
-    item.rel = "noopener";
     item.innerHTML = `<img src="${n.imageData}" alt="${escapeHtml(n.subject)} note" loading="lazy" />
       <span class="photo-meta">${escapeHtml(n.authorUsername)}</span>`;
+    item.addEventListener("click", () => openLightbox(n));
     grid.appendChild(item);
   });
 }
+
+function openLightbox(note) {
+  $("lightbox-img").src = note.imageData;
+  const filename = `${note.subject}-${note.dateKey}.jpg`.replace(/\s+/g, "_");
+  $("lightbox-download").href = note.imageData;
+  $("lightbox-download").setAttribute("download", filename);
+  $("photo-lightbox").classList.remove("hidden");
+  $("lightbox-backdrop").classList.remove("hidden");
+}
+
+function closeLightbox() {
+  $("photo-lightbox").classList.add("hidden");
+  $("lightbox-backdrop").classList.add("hidden");
+}
+$("close-lightbox").addEventListener("click", closeLightbox);
+$("lightbox-backdrop").addEventListener("click", closeLightbox);
 
 $("note-photo-input").addEventListener("change", async (e) => {
   const file = e.target.files[0];

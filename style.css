@@ -234,6 +234,70 @@ html, body {
 .col-yellow { color: var(--yellow); }
 .status-name-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
 
+/* Daily notes (photo uploads) */
+.file-btn { display: inline-flex; align-items: center; cursor: pointer; }
+.note-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.note-tab {
+  flex: 1;
+  padding: 8px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+}
+.note-tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+.notes-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.notes-photo-grid .empty-msg { grid-column: 1 / -1; color: var(--text-dim); font-size: 13px; }
+.note-photo-item {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  aspect-ratio: 1 / 1;
+  background: #fff;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  display: block;
+}
+.note-photo-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.note-photo-item .photo-meta {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  font-size: 9px;
+  padding: 3px 5px;
+  letter-spacing: 0.3px;
+}
+.upload-status { font-size: 12px; color: var(--text-dim); margin-top: 10px; }
+
+/* Photo lightbox */
+.photo-lightbox {
+  width: min(480px, 92vw);
+  text-align: center;
+  padding: 20px;
+}
+.photo-lightbox .close-sheet-btn { top: 12px; right: 14px; }
+.photo-lightbox img {
+  width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 8px;
+  margin: 18px 0 18px;
+  display: block;
+}
+.photo-lightbox .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+
 /* Add-event modal */
 .modal-backdrop {
   position: fixed; inset: 0;
