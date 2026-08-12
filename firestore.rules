@@ -30,6 +30,14 @@ service cloud.firestore {
         allow create: if signedIn() && request.resource.data.authorUid == request.auth.uid;
         allow update, delete: if signedIn() && resource.data.authorUid == request.auth.uid;
       }
+
+      // Daily notes (photo uploads): anyone signed in can read and add.
+      // You can only edit or delete a note you authored.
+      match /dailyNotes/{noteId} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.resource.data.authorUid == request.auth.uid;
+        allow update, delete: if signedIn() && resource.data.authorUid == request.auth.uid;
+      }
     }
   }
 }
