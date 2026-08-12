@@ -207,8 +207,14 @@ function openDaySheet(key) {
   $("day-sheet").classList.remove("hidden");
   $("sheet-backdrop").classList.remove("hidden");
 
+  document.querySelectorAll(".note-tab").forEach((b) => b.classList.remove("active"));
+  document.querySelector('.note-tab[data-subject="Physics"]').classList.add("active");
+  selectedNoteSubject = "Physics";
+  setUploadStatus("");
+
   listenAttendance(key);
   listenEvents(key);
+  listenDayNotes(key);
 }
 
 function closeDaySheet() {
@@ -216,6 +222,7 @@ function closeDaySheet() {
   $("sheet-backdrop").classList.add("hidden");
   if (unsubAttendance) unsubAttendance();
   if (unsubEvents) unsubEvents();
+  if (unsubDayNotes) unsubDayNotes();
   selectedDateKey = null;
 }
 $("close-sheet").addEventListener("click", closeDaySheet);
@@ -346,6 +353,138 @@ $("event-form").addEventListener("submit", async (e) => {
   closeEventModal();
   renderCalendar();
 });
+
+// ---------- daily notes (photo uploads) ----------
+let selectedNoteSubject = "Physics";
+let allDayNotes = []; // cached docs for the currently open day, filtered client-side by tab
+let unsubDayNotes = null;
+
+document.querySelectorAll(".note-tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".note-tab").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    selectedNoteSubject = btn.dataset.subject;
+    renderNotePhotoGrid();
+  });
+});
+
+function listenDayNotes(key) {
+  if (unsubDayNotes) unsubDayNotes();
+  const ref = db.collection("days").doc(key).collection("dailyNotes").orderBy("createdAt", "asc");
+  unsubDayNotes = ref.onSnapshot((snap) => {
+    allDayNotes = snap.docs.map((doc) => doc.data());
+    renderNotePhotoGrid();
+  });
+}
+
+function renderNotePhotoGrid() {
+  const grid = $("notes-photo-grid");
+  grid.innerHTML = "";
+  const filtered = allDayNotes.filter((n) => n.subject === selectedNoteSubject);
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<span class="empty-msg">No ${selectedNoteSubject} notes yet</span>`;
+    return;
+  }
+
+  filtered.forEach((n) => {
+    const item = document.createElement("a");
+    item.className = "note-photo-item";
+    item.href = n.imageData;
+    item.target = "_blank";
+    item.rel = "noopener";
+    item.innerHTML = `<img src="${n.imageData}" alt="${escapeHtml(n.subject)} note" loading="lazy" />
+      <span class="photo-meta">${escapeHtml(n.authorUsername)}</span>`;
+    grid.appendChild(item);
+  });
+}
+
+$("note-photo-input").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  e.target.value = ""; // allow picking the same file again later
+  if (!file || !selectedDateKey || !currentUser) return;
+
+  if (!file.type.startsWith("image/")) {
+    setUploadStatus("Please choose an image file.");
+    return;
+  }
+
+  setUploadStatus(`Compressing and uploading to ${selectedNoteSubject}...`);
+  try {
+    const imageData = await compressImageToDataUrl(file);
+    await db.collection("days").doc(selectedDateKey).collection("dailyNotes").add({
+      subject: selectedNoteSubject,
+      imageData,
+      dateKey: selectedDateKey,
+      authorUsername: currentUser.username,
+      authorUid: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    setUploadStatus("");
+  } catch (err) {
+    console.error(err);
+    setUploadStatus(err.message || "Upload failed — try again.");
+  }
+});
+
+// Firestore documents are capped at ~1MB, and there's no paid Storage
+// service here — so photos are resized/compressed in the browser and
+// saved as a data URL string right inside the note document. Tries a
+// few shrinking passes until it fits comfortably under that cap.
+const FIRESTORE_SAFE_CHAR_LIMIT = 700000; // leaves headroom under the 1MB doc cap
+
+async function compressImageToDataUrl(file) {
+  const img = await loadImage(file);
+  const attempts = [
+    { maxDim: 1000, quality: 0.7 },
+    { maxDim: 800, quality: 0.6 },
+    { maxDim: 600, quality: 0.5 },
+    { maxDim: 450, quality: 0.4 },
+    { maxDim: 320, quality: 0.35 },
+  ];
+
+  for (const { maxDim, quality } of attempts) {
+    const dataUrl = drawToDataUrl(img, maxDim, quality);
+    if (dataUrl.length <= FIRESTORE_SAFE_CHAR_LIMIT) return dataUrl;
+  }
+  throw new Error("That photo is too large even after compression — try a different one.");
+}
+
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Could not read that image."));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error("Could not read that file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function drawToDataUrl(img, maxDim, quality) {
+  let { width, height } = img;
+  if (width > height && width > maxDim) {
+    height = Math.round(height * (maxDim / width));
+    width = maxDim;
+  } else if (height > maxDim) {
+    width = Math.round(width * (maxDim / height));
+    height = maxDim;
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
+function setUploadStatus(msg) {
+  const el = $("notes-upload-status");
+  el.textContent = msg;
+  el.classList.toggle("hidden", !msg);
+}
 
 function escapeHtml(str) {
   const div = document.createElement("div");

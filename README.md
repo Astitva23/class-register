@@ -19,13 +19,18 @@ server code.
 
 ## If you already set up Firebase for an earlier version
 
-Two things changed in the data model — you need to redo these two steps in
-the Firebase console (everything else from before still stands):
-1. **Rules tab** in Firestore → replace with the new `firestore.rules` (the
-   old one referenced a `notes` collection; it's now `events`) → Publish.
-2. The first time the calendar loads, Firestore will likely prompt for a new
-   **composite index** (via a link in the browser console) because of the
-   renamed collection — click it, click Create, wait ~1 minute, reload.
+A few things changed since earlier versions — redo these in the Firebase
+console (everything else from before still stands):
+1. **Firestore Rules tab** → replace with the current `firestore.rules`
+   (adds a `dailyNotes` subcollection alongside `events`) → Publish.
+2. The first time the calendar loads after a change like this, Firestore may
+   prompt for a new **composite index** (via a link in the browser console)
+   — click it, click Create, wait ~1 minute, reload.
+
+> If you'd already started on the Firebase Storage / Blaze-plan setup from a
+> previous version of these instructions, you can ignore all of that —
+> photos are now stored directly in Firestore instead (see "How photo notes
+> work" below), so Storage isn't used and the free Spark plan is enough.
 
 ## 1. Create your Firebase project (~5 minutes, free) — first-time setup
 
@@ -42,7 +47,8 @@ the Firebase console (everything else from before still stands):
 6. Go to the **Rules** tab of Firestore, delete what's there, and paste in
    the contents of `firestore.rules`, then **Publish**.
 
-That's the entire backend. No server to run or maintain.
+That's the entire backend, all on Firebase's free Spark plan — no card
+required, no server to run or maintain.
 
 > **First-time index prompt:** the first time someone opens the calendar,
 > Firestore may show an error in the browser console with a link to
@@ -85,20 +91,42 @@ an event — confirm it all works before deploying.
   User ID and password (no real email needed), and enters their name.
 - Tap a date tile → a panel slides up from the bottom showing:
   - **Important events** for that day (or "No events"), with an **Add Event**
-    button that opens a form (Category, Subject dropdowns).
+    button that opens a form (Category, Subject dropdowns, and an Event Name
+    box that appears only for the Extracurricular category).
+  - **Daily notes** — three tabs (Physics / Chemistry / English) each holding
+    a small photo grid. **+ Add Photo** opens the device's file picker: on
+    phones that means a choice between Camera and Gallery, on a computer it
+    opens a normal Browse dialog — that behavior comes for free from the
+    browser, no extra code needed. Tapping a photo opens it full-size in a
+    new tab.
   - **Your status** — Attending (green) / Not Attending (red) / Not Sure
     (yellow).
   - **Attendance status** — three columns listing who picked what, by User ID.
 - Calendar dots summarize each date at a glance: green/red/yellow for
   attendance, blue for "has an event."
 
+## How photo notes work (no paid plan needed)
+
+Firebase now requires the paid Blaze plan just to turn on Cloud Storage for
+new projects — so instead, photos are resized and compressed right in the
+student's browser (down to whatever fits comfortably under Firestore's
+1MB-per-document limit) and saved as part of the note document itself, no
+separate storage service involved. This keeps the whole project on
+Firebase's free Spark plan. The trade-off is photos are a bit lower
+resolution than the original — plenty readable for a photo of notes or a
+worksheet, but not archival quality.
+
 ## Notes & possible tweaks
 - User IDs are stored lowercase and mapped internally to a fake email
   (`userid@class.local`) since Firebase's login system technically expects
   an email — nobody sees this, they just use their User ID.
 - Anyone can edit their own attendance status and add/edit/delete their own
-  events, but not anyone else's — enforced by `firestore.rules`, not just
-  the UI.
-- Free Firebase tier (Spark plan) comfortably covers a class under 30 people.
-- Want a "teacher" role that can delete anyone's event, or edit an event
-  after adding it? Let me know and I can add that.
+  events and photo notes, but not anyone else's — enforced by
+  `firestore.rules`, not just the UI.
+- Photos are auto-compressed client-side; if a photo genuinely can't be
+  shrunk enough (very rare), the upload shows an error asking for a
+  different photo instead of silently failing.
+- Free Firebase tier (Spark plan) comfortably covers a class under 30 people
+  — 1GiB of Firestore storage holds a large number of compressed note photos.
+- Want a "teacher" role that can delete anyone's event or photo? Let me know
+  and I can add that.
