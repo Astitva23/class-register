@@ -168,9 +168,6 @@ async function loadMonthDots() {
     const s = summaries[cell.dataset.dateKey];
     if (!s) return;
     const dots = cell.querySelector(".day-dots");
-    if (s.attending) dots.innerHTML += `<span class="dot dot-green"></span>`;
-    if (s.notAttending) dots.innerHTML += `<span class="dot dot-red"></span>`;
-    if (s.notSure) dots.innerHTML += `<span class="dot dot-yellow"></span>`;
     if (s.extracurricular) {
       dots.innerHTML += `<span class="dot dot-event-glow event-dot-cross"></span>`;
     } else if (s.event) {
@@ -179,20 +176,10 @@ async function loadMonthDots() {
   });
 }
 
+// Only events feed the calendar tile dots now — attendance is still tracked
+// per-day in the bottom sheet, it just isn't summarized on the tiles anymore.
 async function getMonthSummaries(monthPrefix) {
   const summaries = {};
-  const attSnap = await db.collectionGroup("attendance")
-    .where("dateKey", ">=", `${monthPrefix}-00`)
-    .where("dateKey", "<=", `${monthPrefix}-99`)
-    .get();
-  attSnap.forEach((doc) => {
-    const { dateKey: k, status } = doc.data();
-    summaries[k] = summaries[k] || {};
-    if (status === "attending") summaries[k].attending = true;
-    if (status === "not_attending") summaries[k].notAttending = true;
-    if (status === "not_sure") summaries[k].notSure = true;
-  });
-
   const evSnap = await db.collectionGroup("events")
     .where("dateKey", ">=", `${monthPrefix}-00`)
     .where("dateKey", "<=", `${monthPrefix}-99`)
@@ -463,30 +450,45 @@ $("close-lightbox").addEventListener("click", closeLightbox);
 $("lightbox-backdrop").addEventListener("click", closeLightbox);
 
 $("note-photo-input").addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  e.target.value = ""; // allow picking the same file again later
-  if (!file || !selectedDateKey || !currentUser) return;
+  const files = Array.from(e.target.files || []);
+  e.target.value = ""; // allow picking the same file(s) again later
+  if (files.length === 0 || !selectedDateKey || !currentUser) return;
 
-  if (!file.type.startsWith("image/")) {
-    setUploadStatus("Please choose an image file.");
+  const images = files.filter((f) => f.type.startsWith("image/"));
+  if (images.length === 0) {
+    setUploadStatus("Please choose image files.");
     return;
   }
 
-  setUploadStatus(`Compressing and uploading to ${selectedNoteSubject}...`);
-  try {
-    const imageData = await compressImageToDataUrl(file);
-    await db.collection("days").doc(selectedDateKey).collection("dailyNotes").add({
-      subject: selectedNoteSubject,
-      imageData,
-      dateKey: selectedDateKey,
-      authorUsername: currentUser.username,
-      authorUid: currentUser.uid,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
+  let uploaded = 0;
+  let failed = 0;
+  for (const file of images) {
+    setUploadStatus(
+      images.length > 1
+        ? `Uploading ${uploaded + failed + 1} of ${images.length} to ${selectedNoteSubject}...`
+        : `Compressing and uploading to ${selectedNoteSubject}...`
+    );
+    try {
+      const imageData = await compressImageToDataUrl(file);
+      await db.collection("days").doc(selectedDateKey).collection("dailyNotes").add({
+        subject: selectedNoteSubject,
+        imageData,
+        dateKey: selectedDateKey,
+        authorUsername: currentUser.username,
+        authorUid: currentUser.uid,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      uploaded++;
+    } catch (err) {
+      console.error(err);
+      failed++;
+    }
+  }
+
+  if (failed === 0) {
     setUploadStatus("");
-  } catch (err) {
-    console.error(err);
-    setUploadStatus(err.message || "Upload failed — try again.");
+  } else {
+    setUploadStatus(`Uploaded ${uploaded} of ${images.length} — ${failed} failed (too large or unreadable).`);
   }
 });
 
