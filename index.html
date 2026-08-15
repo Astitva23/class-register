@@ -56,25 +56,33 @@
 
   <!-- APP -->
   <section id="app-section" class="page hidden">
-    <div class="calendar-card">
-      <div class="month-nav">
-        <button id="prev-month" class="text-btn" type="button">&larr;</button>
-        <h2 id="month-label"></h2>
-        <button id="next-month" class="text-btn" type="button">&rarr;</button>
+    <div class="app-layout">
+      <div class="calendar-card">
+        <div class="month-nav">
+          <button id="prev-month" class="text-btn" type="button">&larr;</button>
+          <h2 id="month-label"></h2>
+          <button id="next-month" class="text-btn" type="button">&rarr;</button>
+        </div>
+
+        <div class="weekday-row">
+          <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
+        </div>
+
+        <div class="calendar-grid" id="calendar-grid"></div>
+
+        <p class="legend">
+          <span class="dot dot-green"></span> ATTENDING
+          <span class="dot dot-red"></span> NOT ATTENDING
+          <span class="dot dot-yellow"></span> NOT SURE
+          <span class="dot dot-event-glow"></span> EVENT
+          <span class="dot dot-event-glow event-dot-cross"></span> EXTRACURRICULAR
+        </p>
       </div>
 
-      <div class="weekday-row">
-        <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
+      <div class="upcoming-card">
+        <h2 class="panel-heading">UPCOMING EVENTS</h2>
+        <ul id="upcoming-events-list" class="upcoming-list"></ul>
       </div>
-
-      <div class="calendar-grid" id="calendar-grid"></div>
-
-      <p class="legend">
-        <span class="dot dot-green"></span> ATTENDING
-        <span class="dot dot-red"></span> NOT ATTENDING
-        <span class="dot dot-yellow"></span> NOT SURE
-        <span class="dot dot-event"></span> EVENT
-      </p>
     </div>
   </section>
 </div>

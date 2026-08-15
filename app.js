@@ -14,6 +14,7 @@ let viewYear, viewMonth;
 let selectedDateKey = null;
 let unsubAttendance = null;
 let unsubEvents = null;
+let unsubUpcoming = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -95,11 +96,13 @@ auth.onAuthStateChanged(async (user) => {
     viewYear = t.getFullYear();
     viewMonth = t.getMonth();
     renderCalendar();
+    listenUpcomingEvents();
   } else {
     currentUser = null;
     $("auth-section").classList.remove("hidden");
     $("app-section").classList.add("hidden");
     $("user-badge").classList.add("hidden");
+    if (unsubUpcoming) unsubUpcoming();
     closeDaySheet();
   }
 });
@@ -168,7 +171,11 @@ async function loadMonthDots() {
     if (s.attending) dots.innerHTML += `<span class="dot dot-green"></span>`;
     if (s.notAttending) dots.innerHTML += `<span class="dot dot-red"></span>`;
     if (s.notSure) dots.innerHTML += `<span class="dot dot-yellow"></span>`;
-    if (s.event) dots.innerHTML += `<span class="dot dot-event"></span>`;
+    if (s.extracurricular) {
+      dots.innerHTML += `<span class="dot dot-event-glow event-dot-cross"></span>`;
+    } else if (s.event) {
+      dots.innerHTML += `<span class="dot dot-event-glow"></span>`;
+    }
   });
 }
 
@@ -191,9 +198,11 @@ async function getMonthSummaries(monthPrefix) {
     .where("dateKey", "<=", `${monthPrefix}-99`)
     .get();
   evSnap.forEach((doc) => {
-    const k = doc.data().dateKey;
+    const data = doc.data();
+    const k = data.dateKey;
     summaries[k] = summaries[k] || {};
     summaries[k].event = true;
+    if (data.category === "Extracurricular") summaries[k].extracurricular = true;
   });
 
   return summaries;
@@ -284,6 +293,17 @@ $("mark-not-attending").addEventListener("click", () => setMyStatus("not_attendi
 $("mark-not-sure").addEventListener("click", () => setMyStatus("not_sure"));
 
 // ---------- events ----------
+function eventLabel(data) {
+  return data.eventName
+    ? `${data.category} - ${data.eventName} (${data.subject})`
+    : `${data.category} (${data.subject})`;
+}
+
+function formatDateLabel(key) {
+  const [y, m, d] = key.split("-").map(Number);
+  return `${MONTH_NAMES[m - 1].slice(0, 3)} ${d}, ${y}`;
+}
+
 function listenEvents(key) {
   if (unsubEvents) unsubEvents();
   const ref = db.collection("days").doc(key).collection("events").orderBy("createdAt", "asc");
@@ -298,12 +318,40 @@ function listenEvents(key) {
       const data = doc.data();
       const li = document.createElement("li");
       li.className = "event-item";
-      const label = data.eventName
-        ? `${data.category} - ${data.eventName} (${data.subject})`
-        : `${data.category} (${data.subject})`;
-      li.innerHTML = `${escapeHtml(label)} - Added by ${escapeHtml(data.authorUsername)}`;
+      li.innerHTML = `${escapeHtml(eventLabel(data))} - Added by ${escapeHtml(data.authorUsername)}`;
       list.appendChild(li);
     });
+  });
+}
+
+// Sidebar list of everyone's upcoming events, across all dates from today
+// onward. Deliberately leaves out who added each one — that detail only
+// shows in the per-day panel, not this summarized view.
+function listenUpcomingEvents() {
+  if (unsubUpcoming) unsubUpcoming();
+  const ref = db.collectionGroup("events")
+    .where("dateKey", ">=", todayKey())
+    .orderBy("dateKey", "asc")
+    .limit(25);
+
+  unsubUpcoming = ref.onSnapshot((snap) => {
+    const list = $("upcoming-events-list");
+    list.innerHTML = "";
+    if (snap.empty) {
+      list.innerHTML = `<li class="empty-msg">No upcoming events</li>`;
+      return;
+    }
+    snap.forEach((doc) => {
+      const data = doc.data();
+      const li = document.createElement("li");
+      li.className = "upcoming-item" + (data.category === "Extracurricular" ? " upcoming-extracurricular" : "");
+      li.innerHTML = `<span class="upcoming-date">${formatDateLabel(data.dateKey)}</span><span class="upcoming-label">${escapeHtml(eventLabel(data))}</span>`;
+      list.appendChild(li);
+    });
+  }, (err) => {
+    // Same likely cause as the calendar dots: a one-time Firestore index
+    // prompt in the console the first time this query runs.
+    console.error("Could not load upcoming events:", err);
   });
 }
 
