@@ -22,8 +22,11 @@ server code.
 A few things changed since earlier versions — redo these in the Firebase
 console (everything else from before still stands):
 1. **Firestore Rules tab** → replace with the current `firestore.rules`
-   (adds a `dailyNotes` subcollection alongside `events`) → Publish.
-2. The first time the calendar loads after a change like this, Firestore may
+   (adds an allowlist check on every collection) → Publish.
+2. **Add your allowlist** — see "Restricting access to specific usernames"
+   below. Do this *before* publishing the new rules, or existing students
+   will briefly get locked out until you add them.
+3. The first time the calendar loads after a change like this, Firestore may
    prompt for a new **composite index** (via a link in the browser console)
    — click it, click Create, wait ~1 minute, reload.
 
@@ -56,7 +59,31 @@ required, no server to run or maintain.
 > console with the index pre-filled, click **Create**, wait ~1 minute, then
 > reload the site. You only need to do this once per index.
 
-## 2. Try it locally first (optional but recommended)
+## 2. Restricting access to specific usernames
+
+Only usernames you've explicitly approved can get past login/signup — anyone
+else sees an "Unauthorized: access denied, contact admin" popup and is
+signed back out immediately. You manage the allowed list by hand, directly
+in the Firebase console (no code involved):
+
+1. Firestore Database → **Data** tab → **Start collection** → name it
+   exactly `allowlist`.
+2. For each student you want to allow, add a document whose **Document ID**
+   is their exact username, all lowercase (e.g. `mrwest`, `priya_s`) — the
+   fields inside the document don't matter, you can leave it with a single
+   placeholder field or add a `name` field for your own reference.
+3. That's it — the site checks for a matching document on every login.
+
+To revoke someone's access later, just delete their document from
+`allowlist`. They won't be forced out of a session already in progress, but
+they'll be blocked the next time they sign in.
+
+This is enforced two ways: the popup is the friendly version students see,
+but the actual permission check also lives in `firestore.rules` (via a
+`isAllowed()` check on every collection) — so even someone poking around in
+browser dev tools can't read or write class data without being on the list.
+
+## 3. Try it locally first (optional but recommended)
 
 You can't just double-click `index.html` (browsers block Firebase's requests
 from `file://` URLs). Instead, from inside the `class-site` folder run any
@@ -69,7 +96,7 @@ python3 -m http.server 8000
 Then open `http://localhost:8000`. Sign up a test account, mark a day, add
 an event — confirm it all works before deploying.
 
-## 3. Deploy
+## 4. Deploy
 
 ### Option A: Vercel (recommended)
 1. Push the files to a GitHub repo.
@@ -85,10 +112,11 @@ an event — confirm it all works before deploying.
    `main`, folder `/ (root)` (or `/docs`) → **Save**.
 3. GitHub gives you a URL like `https://yourusername.github.io/repo-name/`.
 
-## 4. Using it
+## 5. Using it
 
-- Send classmates the link. Each person clicks **Join the class**, picks any
-  User ID and password (no real email needed), and enters their name.
+- Add each classmate's username to `allowlist` first (see step 2), then send
+  them the link. Each person clicks **Join the class**, picks the same User
+  ID you allow-listed for them and any password, and enters their name.
 - Tap a date tile → a panel slides up from the bottom showing:
   - **Important events** for that day (or "No events"), with an **Add Event**
     button that opens a form (Category, Subject dropdowns, and an Event Name
