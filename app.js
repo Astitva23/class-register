@@ -360,7 +360,7 @@ function listenUpcomingEvents() {
   const ref = db.collectionGroup("events")
     .where("dateKey", ">=", todayKey())
     .orderBy("dateKey", "asc")
-    .limit(25); 
+    .limit(25);
 
   unsubUpcoming = ref.onSnapshot((snap) => {
     const list = $("upcoming-events-list");
