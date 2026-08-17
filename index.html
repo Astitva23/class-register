@@ -173,11 +173,22 @@
     <label id="event-name-field" class="hidden">Event name
       <input type="text" id="event-name" placeholder="e.g. Debate club meetup" />
     </label>
+    <label id="event-syllabus-field" class="hidden">Syllabus
+      <textarea id="event-syllabus" rows="6" placeholder="Paste or type the full C.T syllabus here"></textarea>
+    </label>
     <div class="modal-actions">
       <button type="button" id="cancel-event" class="btn btn-ghost">CANCEL</button>
       <button type="submit" class="btn btn-primary">ADD EVENT</button>
     </div>
   </form>
+</div>
+
+<!-- Syllabus viewer -->
+<div id="syllabus-backdrop" class="modal-backdrop hidden"></div>
+<div id="syllabus-modal" class="modal syllabus-modal hidden">
+  <button id="close-syllabus" class="text-btn close-sheet-btn" type="button">&times;</button>
+  <h3 id="syllabus-title"></h3>
+  <p id="syllabus-text" class="syllabus-text"></p>
 </div>
 
 <!-- Photo lightbox -->
@@ -186,6 +197,14 @@
   <button id="close-lightbox" class="text-btn close-sheet-btn" type="button">&times;</button>
   <img id="lightbox-img" src="" alt="Note photo" />
   <a id="lightbox-download" class="btn btn-primary full-width" download>DOWNLOAD</a>
+</div>
+
+<!-- Unauthorized (not on the allowlist) -->
+<div id="unauthorized-backdrop" class="modal-backdrop hidden"></div>
+<div id="unauthorized-modal" class="modal unauthorized-modal hidden">
+  <h3>ACCESS DENIED</h3>
+  <p>Unauthorized: access denied, contact admin.</p>
+  <button id="unauthorized-close" class="btn btn-primary full-width" type="button">OK</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>

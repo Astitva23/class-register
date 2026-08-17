@@ -85,6 +85,25 @@ auth.onAuthStateChanged(async (user) => {
   if (user) {
     const snap = await db.collection("users").doc(user.uid).get();
     const profile = snap.exists ? snap.data() : { name: user.email, username: "" };
+
+    // Allowlist check — happens after auth succeeds but before the app is
+    // shown. Rejected here AND enforced again in firestore.rules, so
+    // someone bypassing this client-side check still can't read/write any
+    // class data.
+    let allowed = false;
+    try {
+      const allowSnap = await db.collection("allowlist").doc(profile.username).get();
+      allowed = allowSnap.exists;
+    } catch (err) {
+      console.error("Could not check allowlist:", err);
+    }
+
+    if (!allowed) {
+      await auth.signOut();
+      showUnauthorized();
+      return; // onAuthStateChanged fires again with user === null
+    }
+
     currentUser = { uid: user.uid, name: profile.name, username: profile.username };
 
     $("auth-section").classList.add("hidden");
@@ -106,6 +125,17 @@ auth.onAuthStateChanged(async (user) => {
     closeDaySheet();
   }
 });
+
+function showUnauthorized() {
+  $("unauthorized-modal").classList.remove("hidden");
+  $("unauthorized-backdrop").classList.remove("hidden");
+}
+function closeUnauthorized() {
+  $("unauthorized-modal").classList.add("hidden");
+  $("unauthorized-backdrop").classList.add("hidden");
+}
+$("unauthorized-close").addEventListener("click", closeUnauthorized);
+$("unauthorized-backdrop").addEventListener("click", closeUnauthorized);
 
 // ---------- calendar ----------
 $("prev-month").addEventListener("click", () => {
@@ -286,6 +316,16 @@ function eventLabel(data) {
     : `${data.category} (${data.subject})`;
 }
 
+function appendSyllabusButtonIfNeeded(container, data) {
+  if (data.category !== "C.T" || !data.syllabus) return;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "text-btn view-syllabus-btn";
+  btn.textContent = "VIEW SYLLABUS";
+  btn.addEventListener("click", () => openSyllabusModal(data));
+  container.appendChild(btn);
+}
+
 function formatDateLabel(key) {
   const [y, m, d] = key.split("-").map(Number);
   return `${MONTH_NAMES[m - 1].slice(0, 3)} ${d}, ${y}`;
@@ -306,6 +346,7 @@ function listenEvents(key) {
       const li = document.createElement("li");
       li.className = "event-item";
       li.innerHTML = `${escapeHtml(eventLabel(data))} - Added by ${escapeHtml(data.authorUsername)}`;
+      appendSyllabusButtonIfNeeded(li, data);
       list.appendChild(li);
     });
   });
@@ -333,6 +374,7 @@ function listenUpcomingEvents() {
       const li = document.createElement("li");
       li.className = "upcoming-item" + (data.category === "Extracurricular" ? " upcoming-extracurricular" : "");
       li.innerHTML = `<span class="upcoming-date">${formatDateLabel(data.dateKey)}</span><span class="upcoming-label">${escapeHtml(eventLabel(data))}</span>`;
+      appendSyllabusButtonIfNeeded(li.querySelector(".upcoming-label"), data);
       list.appendChild(li);
     });
   }, (err) => {
@@ -344,19 +386,26 @@ function listenUpcomingEvents() {
 
 $("open-add-event").addEventListener("click", () => {
   $("event-form").reset();
-  toggleEventNameField();
+  toggleCategoryFields();
   $("event-modal").classList.remove("hidden");
   $("event-modal-backdrop").classList.remove("hidden");
 });
 
-// The "Event name" box only appears (and is only required) for Extracurricular.
-function toggleEventNameField() {
-  const isExtracurricular = $("event-category").value === "Extracurricular";
+// "Event name" only appears for Extracurricular; "Syllabus" only for C.T.
+function toggleCategoryFields() {
+  const category = $("event-category").value;
+  const isExtracurricular = category === "Extracurricular";
+  const isCT = category === "C.T";
+
   $("event-name-field").classList.toggle("hidden", !isExtracurricular);
   $("event-name").required = isExtracurricular;
   if (!isExtracurricular) $("event-name").value = "";
+
+  $("event-syllabus-field").classList.toggle("hidden", !isCT);
+  $("event-syllabus").required = isCT;
+  if (!isCT) $("event-syllabus").value = "";
 }
-$("event-category").addEventListener("change", toggleEventNameField);
+$("event-category").addEventListener("change", toggleCategoryFields);
 
 function closeEventModal() {
   $("event-modal").classList.add("hidden");
@@ -370,8 +419,10 @@ $("event-form").addEventListener("submit", async (e) => {
   const category = $("event-category").value;
   const subject = $("event-subject").value;
   const eventName = $("event-name").value.trim();
+  const syllabus = $("event-syllabus").value.trim();
   if (!category || !subject || !selectedDateKey || !currentUser) return;
   if (category === "Extracurricular" && !eventName) return;
+  if (category === "C.T" && !syllabus) return;
 
   const doc = {
     category,
@@ -382,12 +433,27 @@ $("event-form").addEventListener("submit", async (e) => {
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   };
   if (category === "Extracurricular") doc.eventName = eventName;
+  if (category === "C.T") doc.syllabus = syllabus;
 
   await db.collection("days").doc(selectedDateKey).collection("events").add(doc);
 
   closeEventModal();
   renderCalendar();
 });
+
+// ---------- syllabus viewer ----------
+function openSyllabusModal(data) {
+  $("syllabus-title").textContent = `${data.subject} — ${formatDateLabel(data.dateKey)}`;
+  $("syllabus-text").textContent = data.syllabus;
+  $("syllabus-modal").classList.remove("hidden");
+  $("syllabus-backdrop").classList.remove("hidden");
+}
+function closeSyllabusModal() {
+  $("syllabus-modal").classList.add("hidden");
+  $("syllabus-backdrop").classList.add("hidden");
+}
+$("close-syllabus").addEventListener("click", closeSyllabusModal);
+$("syllabus-backdrop").addEventListener("click", closeSyllabusModal);
 
 // ---------- daily notes (photo uploads) ----------
 let selectedNoteSubject = "Physics";

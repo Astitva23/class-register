@@ -121,7 +121,7 @@ html, body {
 
 .auth-form { display: flex; flex-direction: column; gap: 14px; }
 .auth-form label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--text-dim); letter-spacing: 0.4px; }
-.auth-form input, select, .modal input {
+.auth-form input, select, .modal input, .modal textarea {
   font-family: Arial, Helvetica, sans-serif;
   font-weight: bold;
   font-size: 14px;
@@ -131,7 +131,8 @@ html, body {
   background: var(--surface-2);
   color: var(--text);
 }
-.auth-form input:focus, select:focus { outline: 2px solid var(--blue); border-color: var(--blue); }
+.modal textarea { resize: vertical; min-height: 90px; }
+.auth-form input:focus, select:focus, .modal textarea:focus { outline: 2px solid var(--blue); border-color: var(--blue); }
 
 .error { color: var(--red); font-size: 13px; margin-top: 14px; }
 .note { color: var(--text-dim); font-size: 11px; margin-top: 16px; line-height: 1.5; }
@@ -349,6 +350,27 @@ html, body {
   display: block;
 }
 .photo-lightbox .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+
+/* Unauthorized modal */
+.unauthorized-modal {
+  width: min(340px, 90vw);
+  text-align: center;
+  border-color: var(--red);
+}
+.unauthorized-modal h3 { color: var(--red); }
+.unauthorized-modal p { color: var(--text); font-size: 13px; line-height: 1.5; margin-bottom: 20px; }
+
+/* Syllabus viewer */
+.syllabus-modal {
+  width: min(480px, 92vw);
+  max-height: 72vh;
+  overflow-y: auto;
+  text-align: left;
+  padding: 24px 22px;
+}
+.syllabus-modal h3 { margin: 0 28px 14px 0; font-size: 15px; letter-spacing: 1px; }
+.syllabus-text { white-space: pre-wrap; font-size: 13px; line-height: 1.6; color: var(--text); margin: 0; }
+.view-syllabus-btn { margin-left: 6px; font-size: 11px; }
 
 /* Add-event modal */
 .modal-backdrop {
