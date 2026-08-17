@@ -6,37 +6,60 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Everyone signed in can see everyone's name; you can only edit your own profile.
+    // Looks up the caller's chosen username from their own profile doc,
+    // then checks whether that username has an /allowlist/{username} doc.
+    // Admin manages the allowlist by hand in the Firebase console — see
+    // README for how to add/remove usernames.
+    function myUsername() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username;
+    }
+    function isAllowed() {
+      return signedIn() && exists(/databases/$(database)/documents/allowlist/$(myUsername()));
+    }
+
+    // Read-only from the client — only editable by the admin, directly in
+    // the Firebase console's Firestore data tab.
+    match /allowlist/{username} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // Everyone signed in can see everyone's name. Creating your own profile
+    // is allowed right after signup (before an allowlist check is even
+    // possible, since the check depends on this doc existing) — but every
+    // other collection below requires isAllowed(), so an unlisted username
+    // still can't see or touch any class data.
     match /users/{uid} {
       allow read: if signedIn();
-      allow create, update: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid;
+      allow update: if isAllowed() && request.auth.uid == uid;
       allow delete: if false;
     }
 
     match /days/{dateId} {
-      allow read: if signedIn();
+      allow read: if isAllowed();
 
-      // Attendance: anyone signed in can read the whole class's status,
+      // Attendance: anyone allow-listed can read the whole class's status,
       // but you can only ever write your own attendance doc (doc id = your uid).
       match /attendance/{uid} {
-        allow read: if signedIn();
-        allow write: if signedIn() && request.auth.uid == uid;
+        allow read: if isAllowed();
+        allow write: if isAllowed() && request.auth.uid == uid;
       }
 
-      // Events: anyone signed in can read and add events.
+      // Events: anyone allow-listed can read and add events.
       // You can only edit or delete an event you authored.
       match /events/{eventId} {
-        allow read: if signedIn();
-        allow create: if signedIn() && request.resource.data.authorUid == request.auth.uid;
-        allow update, delete: if signedIn() && resource.data.authorUid == request.auth.uid;
+        allow read: if isAllowed();
+        allow create: if isAllowed() && request.resource.data.authorUid == request.auth.uid;
+        allow update, delete: if isAllowed() && resource.data.authorUid == request.auth.uid;
       }
 
-      // Daily notes (photo uploads): anyone signed in can read and add.
+      // Daily notes (photo uploads): anyone allow-listed can read and add.
       // You can only edit or delete a note you authored.
       match /dailyNotes/{noteId} {
-        allow read: if signedIn();
-        allow create: if signedIn() && request.resource.data.authorUid == request.auth.uid;
-        allow update, delete: if signedIn() && resource.data.authorUid == request.auth.uid;
+        allow read: if isAllowed();
+        allow create: if isAllowed() && request.resource.data.authorUid == request.auth.uid;
+        allow update, delete: if isAllowed() && resource.data.authorUid == request.auth.uid;
       }
     }
   }
