@@ -85,25 +85,6 @@ auth.onAuthStateChanged(async (user) => {
   if (user) {
     const snap = await db.collection("users").doc(user.uid).get();
     const profile = snap.exists ? snap.data() : { name: user.email, username: "" };
-
-    // Allowlist check — happens after auth succeeds but before the app is
-    // shown. Rejected here AND enforced again in firestore.rules, so
-    // someone bypassing this client-side check still can't read/write any
-    // class data.
-    let allowed = false;
-    try {
-      const allowSnap = await db.collection("allowlist").doc(profile.username).get();
-      allowed = allowSnap.exists;
-    } catch (err) {
-      console.error("Could not check allowlist:", err);
-    }
-
-    if (!allowed) {
-      await auth.signOut();
-      showUnauthorized();
-      return; // onAuthStateChanged fires again with user === null
-    }
-
     currentUser = { uid: user.uid, name: profile.name, username: profile.username };
 
     $("auth-section").classList.add("hidden");
@@ -125,17 +106,6 @@ auth.onAuthStateChanged(async (user) => {
     closeDaySheet();
   }
 });
-
-function showUnauthorized() {
-  $("unauthorized-modal").classList.remove("hidden");
-  $("unauthorized-backdrop").classList.remove("hidden");
-}
-function closeUnauthorized() {
-  $("unauthorized-modal").classList.add("hidden");
-  $("unauthorized-backdrop").classList.add("hidden");
-}
-$("unauthorized-close").addEventListener("click", closeUnauthorized);
-$("unauthorized-backdrop").addEventListener("click", closeUnauthorized);
 
 // ---------- calendar ----------
 $("prev-month").addEventListener("click", () => {
